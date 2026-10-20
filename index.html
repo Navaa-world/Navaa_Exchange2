@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#111827">
+<title>NAVAA Exchange</title>
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.5/dist/ethers.umd.min.js"></script>
+<style>
+:root{color-scheme:dark;--bg:#0b1020;--panel:#131b2f;--panel2:#18233a;--line:#293650;--text:#eef3ff;--muted:#9eacc7;--accent:#a78bfa;--accent2:#7c3aed;--green:#34d399;--red:#fb7185}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(900px 500px at 10% -10%,#29204c 0%,transparent 65%),var(--bg);color:var(--text);font:15px/1.5 system-ui,-apple-system,Segoe UI,sans-serif}
+main{max-width:1040px;margin:auto;padding:24px 16px 56px}.top{display:flex;align-items:center;gap:12px;justify-content:space-between;flex-wrap:wrap;margin-bottom:22px}.brand{display:flex;align-items:center;gap:12px}.logo{width:44px;height:44px;border-radius:15px;background:linear-gradient(135deg,#c4b5fd,#6d28d9);display:grid;place-items:center;font-weight:900;color:#120c27;font-size:20px}.muted{color:var(--muted)}h1{font-size:24px;margin:0}h2{font-size:17px;margin:0 0 14px}.small{font-size:12px}.pill{border:1px solid var(--line);border-radius:999px;padding:6px 10px;color:var(--muted);font-size:12px}.btn{border:0;border-radius:12px;padding:12px 15px;background:var(--accent);color:#170d2e;font-weight:800;cursor:pointer;font-size:14px}.btn:hover{filter:brightness(1.08)}.btn.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--line)}.btn.danger{background:#4c1d2d;color:#fecdd3}.btn:disabled{opacity:.45;cursor:not-allowed}.layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(280px,.75fr);gap:16px}.card{background:linear-gradient(180deg,rgba(24,35,58,.96),rgba(19,27,47,.98));border:1px solid var(--line);border-radius:20px;padding:20px;min-width:0}.tabs{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}.tab{padding:11px;border:1px solid var(--line);border-radius:12px;background:transparent;color:var(--muted);font-weight:800;cursor:pointer}.tab.active{background:#302456;color:#e9ddff;border-color:#7c3aed}.field{display:block;margin:14px 0 6px;color:var(--muted);font-size:13px}.inputwrap{display:flex;gap:8px;align-items:center;background:#0d1425;border:1px solid var(--line);border-radius:13px;padding:5px 12px}.inputwrap input{background:transparent;border:0;outline:0;color:var(--text);font-size:19px;width:100%;min-width:0;padding:10px 0}.token{font-weight:800;color:#ddd6fe}.row{display:flex;justify-content:space-between;align-items:center;gap:12px}.quote{background:#0d1425;border:1px solid var(--line);border-radius:14px;padding:13px;margin:14px 0}.quote-line{display:flex;justify-content:space-between;gap:12px;margin:6px 0;font-size:13px}.full{width:100%;margin-top:12px}.notice{padding:11px 13px;border-radius:12px;background:#2b2416;color:#fde68a;font-size:13px;margin:12px 0}.status{margin-top:12px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px}.good{color:var(--green)}.bad{color:var(--red)}.stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stat{background:#0d1425;border:1px solid var(--line);border-radius:13px;padding:12px;min-width:0}.stat .v{font-size:18px;font-weight:800;overflow-wrap:anywhere}.admin{margin-top:16px}.admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.admin-grid input{width:100%;background:#0d1425;border:1px solid var(--line);border-radius:10px;padding:11px;color:var(--text);margin-top:5px}.admin-grid label{font-size:12px;color:var(--muted)}.admin-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.hidden{display:none!important}a{color:#c4b5fd}.foot{margin-top:20px;font-size:12px;color:var(--muted)}.sep{border:0;border-top:1px solid var(--line);margin:18px 0}@media(max-width:760px){.layout{grid-template-columns:1fr}.card{padding:16px}.admin-grid{grid-template-columns:1fr}.top{align-items:flex-start}h1{font-size:21px}}
+</style>
+</head>
+<body><main>
+<header class="top">
+  <div class="brand"><div class="logo">N</div><div><h1>NAVAA Exchange</h1><div class="muted small">Fixed-rate trading on Polygon PoS</div></div></div>
+  <div class="row"><span class="pill" id="networkPill">Polygon · read-only</span><button class="btn" id="connectBtn">Connect wallet</button></div>
+</header>
+<div class="notice">Use only Polygon Mainnet (chain ID 137). Always verify the contract addresses. Quotes are estimates and can change before confirmation.</div>
+<div class="layout">
+<section class="card">
+  <div class="tabs"><button class="tab active" id="buyTab">Buy NAVAA</button><button class="tab" id="sellTab">Sell NAVAA</button></div>
+  <div id="buyPanel">
+    <div class="row"><span class="muted">You pay</span><span class="token">POL</span></div>
+    <div class="inputwrap"><input id="buyAmount" type="number" min="0" step="any" value="1" inputmode="decimal"><span class="token">POL</span></div>
+    <div class="row" style="margin-top:13px"><span class="muted">You receive (estimated)</span><span class="token">NAVAA</span></div>
+    <div class="inputwrap"><input id="buyOutput" readonly value="—"><span class="token">NAVAA</span></div>
+    <div class="quote"><div class="quote-line"><span class="muted">Trading fee (0.2%)</span><strong id="buyFee">— POL</strong></div><div class="quote-line"><span class="muted">Approx. INR value</span><strong id="buyInr">—</strong></div><div class="quote-line"><span class="muted">Reserve status</span><strong id="buyReserve">Connect/read contract</strong></div></div>
+    <label class="field" for="slippage">Slippage tolerance</label><div class="inputwrap"><input id="slippage" type="number" min="0" max="50" step="0.1" value="1"><span class="token">%</span></div>
+    <button class="btn full" id="buyBtn">Connect wallet to buy</button>
+  </div>
+  <div id="sellPanel" class="hidden">
+    <div class="row"><span class="muted">You sell</span><span class="token">NAVAA</span></div>
+    <div class="inputwrap"><input id="sellAmount" type="number" min="0" step="any" value="99.8" inputmode="decimal"><span class="token">NAVAA</span></div>
+    <div class="row" style="margin-top:13px"><span class="muted">You receive (estimated)</span><span class="token">POL</span></div>
+    <div class="inputwrap"><input id="sellOutput" readonly value="—"><span class="token">POL</span></div>
+    <div class="quote"><div class="quote-line"><span class="muted">Trading fee (0.2%)</span><strong id="sellFee">— NAVAA</strong></div><div class="quote-line"><span class="muted">Approx. INR value</span><strong id="sellInr">—</strong></div><div class="quote-line"><span class="muted">Allowance</span><strong id="allowanceStatus">Not checked</strong></div><div class="quote-line"><span class="muted">Reserve status</span><strong id="sellReserve">Connect/read contract</strong></div></div>
+    <label class="field" for="slippage2">Slippage tolerance</label><div class="inputwrap"><input id="slippage2" type="number" min="0" max="50" step="0.1" value="1"><span class="token">%</span></div>
+    <button class="btn full" id="approveBtn">Approve NAVAA</button><button class="btn full" id="sellBtn">Connect wallet to sell</button>
+  </div>
+  <div id="tradeStatus" class="status muted" role="status"></div>
+</section>
+<aside class="card">
+  <h2>Exchange information</h2>
+  <div class="stats">
+    <div class="stat"><div class="muted small">Buy rate</div><div class="v" id="buyRateStat">—</div><div class="muted small">POL / NAVAA</div></div>
+    <div class="stat"><div class="muted small">Sell rate</div><div class="v" id="sellRateStat">—</div><div class="muted small">POL / NAVAA</div></div>
+    <div class="stat"><div class="muted small">NAVAA reserve</div><div class="v" id="tokenReserve">—</div></div>
+    <div class="stat"><div class="muted small">POL reserve</div><div class="v" id="polReserve">—</div></div>
+  </div>
+  <hr class="sep">
+  <div class="quote-line"><span class="muted">POL / INR reference</span><strong id="polInr">Fetching…</strong></div>
+  <div class="quote-line"><span class="muted">Fee wallet</span><strong id="feeWallet" style="font-size:11px;overflow-wrap:anywhere">—</strong></div>
+  <div class="quote-line"><span class="muted">Contract status</span><strong id="pausedStatus">—</strong></div>
+  <div class="foot">INR is an indicative market reference, not a guaranteed conversion or payout. This is a fixed-rate exchange; rates are owner-controlled.</div>
+</aside>
+</div>
+<section class="card admin hidden" id="adminPanel">
+  <div class="row"><h2>Owner dashboard</h2><span class="pill">Owner only</span></div>
+  <div class="muted small">Owner actions affect all users. Double-check values before confirming any wallet transaction.</div>
+  <div class="admin-grid" style="margin-top:14px">
+    <label>New buy rate (POL per NAVAA; human units)<input id="newBuyRate" type="number" min="0" step="any" placeholder="e.g. 0.01"></label>
+    <label>New sell rate (POL per NAVAA; human units)<input id="newSellRate" type="number" min="0" step="any" placeholder="e.g. 0.009"></label>
+    <label>New fee wallet address<input id="newFeeWallet" placeholder="0x…"></label>
+    <label>POL to deposit (POL)<input id="depositAmount" type="number" min="0" step="any" placeholder="Amount"></label>
+    <label>Withdraw POL (POL)<input id="withdrawPolAmount" type="number" min="0" step="any" placeholder="Amount"></label>
+    <label>Withdraw NAVAA (NAVAA)<input id="withdrawTokenAmount" type="number" min="0" step="any" placeholder="Amount"></label>
+  </div>
+  <div class="admin-actions">
+    <button class="btn" id="setRatesBtn">Update both rates</button><button class="btn secondary" id="setFeeBtn">Update fee wallet</button><button class="btn secondary" id="depositPolBtn">Deposit POL</button><button class="btn secondary" id="withdrawPolBtn">Withdraw POL</button><button class="btn secondary" id="withdrawTokenBtn">Withdraw NAVAA</button><button class="btn danger" id="pauseBtn">Pause trading</button><button class="btn secondary" id="unpauseBtn">Unpause trading</button>
+  </div>
+  <div id="adminStatus" class="status muted"></div>
+  <div class="foot">To fund NAVAA reserve, use your wallet's NAVAA token transfer function and send tokens to the Exchange contract address shown below. Confirm token balance afterwards.</div>
+</section>
+<section class="card" style="margin-top:16px">
+  <h2>Verified configuration</h2>
+  <div class="field">Exchange contract</div><div style="overflow-wrap:anywhere;font-size:13px" id="exchangeAddress"></div>
+  <div class="field">NAVAA token contract</div><div style="overflow-wrap:anywhere;font-size:13px" id="tokenAddress"></div>
+  <div class="admin-actions"><a id="exchangeScan" target="_blank" rel="noreferrer">View exchange on PolygonScan</a><a id="tokenScan" target="_blank" rel="noreferrer">View NAVAA token on PolygonScan</a></div>
+</section>
+<div class="foot">Never share your seed phrase or private key. Review every transaction in your wallet. This interface is provided as a starter project, not an audit or guarantee of contract safety.</div>
+</main>
+<script>
+(() => {
+'use strict';
+const EXCHANGE = '0xf31f82837b89f4d9a37b8e700cb175893766dd8f';
+const TOKEN = '0x82dba663278ADF0c398c1795a31760c7a76CA932';
+const CHAIN_ID = 137n;
+const EX_ABI = [
+ 'function navaa() view returns (address)','function owner() view returns (address)','function feeWallet() view returns (address)',
+ 'function buyRate() view returns (uint256)','function sellRate() view returns (uint256)','function paused() view returns (bool)',
+ 'function quoteBuy(uint256) view returns (uint256,uint256,uint256,bool)','function quoteSell(uint256) view returns (uint256,uint256,uint256,bool)',
+ 'function buy(uint256 minNAVAAOut,uint256 deadline) payable','function sell(uint256 grossNAVAA,uint256 minPOLOut,uint256 deadline)',
+ 'function setRates(uint256 newBuyRate,uint256 newSellRate)','function setFeeWallet(address newWallet)',
+ 'function depositPOL() payable','function withdrawPOL(uint256 amount)','function withdrawNAVAA(uint256 amount)',
+ 'function pause()','function unpause()'
+];
+const TOKEN_ABI = [
+ 'function balanceOf(address) view returns (uint256)','function allowance(address,address) view returns (uint256)',
+ 'function approve(address,uint256) returns (bool)','function transfer(address,uint256) returns (bool)'
+];
+let provider=null, signer=null, account=null, exRead=null, exWrite=null, tokenRead=null, tokenWrite=null;
+let buyQuote=null,sellQuote=null, polInrPrice=null, isOwner=false;
+const $ = id => document.getElementById(id);
+const fmt = (v, digits=6) => { try { return Number(v).toLocaleString('en-US',{maximumFractionDigits:digits}); } catch { return '—'; } };
+const prettyError = e => { const s=e?.shortMessage||e?.reason||e?.info?.error?.message||e?.message||String(e); return s.replace('execution reverted: ',''); };
+function status(id,msg,kind='muted'){const el=$(id);el.className='status '+kind;el.textContent=msg;}
+function setNetwork(text){$('networkPill').textContent=text;}
+function amountToUnits(value, decimals=18){if(!value || !/^\d+(\.\d*)?$/.test(String(value).trim())) throw Error('Valid positive amount enter karein.');const n=ethers.parseUnits(String(value),decimals);if(n<=0n)throw Error('Amount zero se zyada hona chahiye.');return n;}
+function unitsToHuman(v,decimals=18){return ethers.formatUnits(v,decimals);}
+function deadline(){return BigInt(Math.floor(Date.now()/1000)+1200);}
+function minOut(out, slippageId){const s=Number($(slippageId).value);if(!Number.isFinite(s)||s<0||s>50)throw Error('Slippage 0 se 50% ke beech rakhein.');return out*BigInt(Math.floor((100-s)*10000))/1000000n;}
+function setTxt(id,v){$(id).textContent=v;}
+async function ensurePolygon(){
+ if(!window.ethereum)throw Error('MetaMask ya EVM wallet browser extension connect karein. GitHub Pages URL ko wallet ke in-app browser mein bhi khol sakte hain.');
+ let chain=await window.ethereum.request({method:'eth_chainId'});
+ if(BigInt(chain)!==CHAIN_ID){
+   try{await window.ethereum.request({method:'wallet_switchEthereumChain',params:[{chainId:'0x89'}]});}
+   catch(e){if(e.code===4902)await window.ethereum.request({method:'wallet_addEthereumChain',params:[{chainId:'0x89',chainName:'Polygon Mainnet',nativeCurrency:{name:'POL',symbol:'POL',decimals:18},rpcUrls:['https://polygon.drpc.org'],blockExplorerUrls:['https://polygonscan.com']} ]});else throw e;}
+ }
+}
+async function initRead(){
+ provider=new ethers.JsonRpcProvider('https://polygon.drpc.org');
+ exRead=new ethers.Contract(EXCHANGE,EX_ABI,provider);
+ tokenRead=new ethers.Contract(TOKEN,TOKEN_ABI,provider);
+ $('exchangeAddress').textContent=EXCHANGE;$('tokenAddress').textContent=TOKEN;
+ $('exchangeScan').href='https://polygonscan.com/address/'+EXCHANGE;
+ $('tokenScan').href='https://polygonscan.com/address/'+TOKEN;
+ await refreshInfo();
+}
+async function refreshInfo(){
+ try{
+  const [tokenAddr,owner,fee,buy,sell,paused,tokenBal,polBal]=await Promise.all([
+   exRead.navaa(),exRead.owner(),exRead.feeWallet(),exRead.buyRate(),exRead.sellRate(),exRead.paused(),
+   tokenRead.balanceOf(EXCHANGE),provider.getBalance(EXCHANGE)
+  ]);
+  setTxt('buyRateStat',fmt(Number(ethers.formatEther(buy)),10));setTxt('sellRateStat',fmt(Number(ethers.formatEther(sell)),10));
+  setTxt('tokenReserve',fmt(Number(ethers.formatEther(tokenBal))));setTxt('polReserve',fmt(Number(ethers.formatEther(polBal))));
+  setTxt('feeWallet',fee);setTxt('pausedStatus',paused?'Paused':'Active');setTxt('pausedStatus',paused?'Paused':'Active');
+  if(tokenAddr.toLowerCase()!==TOKEN.toLowerCase())throw Error('Warning: Exchange ka configured NAVAA token address expected token se match nahi karta!');
+  isOwner=!!account&&owner.toLowerCase()===account.toLowerCase();
+  $('adminPanel').classList.toggle('hidden',!isOwner);
+  setNetwork(account?'Polygon · wallet connected':'Polygon · read-only');
+  await updateQuotes();
+ }catch(e){status('tradeStatus','Contract read failed: '+prettyError(e),'bad');}
+}
+async function updatePolPrice(){
+ try{const r=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=polygon-ecosystem-token&vs_currencies=inr',{cache:'no-store'});if(!r.ok)throw Error('price unavailable');const j=await r.json();polInrPrice=Number(j['polygon-ecosystem-token']?.inr);if(!polInrPrice)throw Error('price unavailable');setTxt('polInr','₹'+fmt(polInrPrice,2));}
+ catch{polInrPrice=null;setTxt('polInr','Unavailable');}
+ await updateQuotes();
+}
+async function updateQuotes(){
+ if(!exRead)return;
+ try{
+  const ba=$('buyAmount').value,sa=$('sellAmount').value;
+  if(Number(ba)>0){
+   const q=await exRead.quoteBuy(amountToUnits(ba));buyQuote=q;
+   $('buyOutput').value=fmt(Number(unitsToHuman(q[2])),6);
+   setTxt('buyFee',fmt(Number(ba)*0.002,8)+' POL');
+   setTxt('buyReserve',q[3]?'Available':'Insufficient reserve / paused');
+   setTxt('buyInr',polInrPrice?'₹'+fmt(Number(ba)*polInrPrice,2):'Unavailable');
+  }else{$('buyOutput').value='—';setTxt('buyFee','— POL');setTxt('buyReserve','Enter amount');}
+  if(Number(sa)>0){
+   const q=await exRead.quoteSell(amountToUnits(sa));sellQuote=q;
+   $('sellOutput').value=fmt(Number(unitsToHuman(q[2])),8);
+   setTxt('sellFee',fmt(Number(sa)*0.002,8)+' NAVAA');
+   setTxt('sellReserve',q[3]?'Available':'Insufficient POL reserve / paused');
+   setTxt('sellInr',polInrPrice?'₹'+fmt(Number(unitsToHuman(q[2]))*polInrPrice,2):'Unavailable');
+   if(account){const a=await tokenRead.allowance(account,EXCHANGE);setTxt('allowanceStatus',Number(unitsToHuman(a))>=Number(sa)?'Sufficient':'Approval required');}
+  }else{ $('sellOutput').value='—';setTxt('sellFee','— NAVAA');setTxt('sellReserve','Enter amount');}
+ }catch(e){status('tradeStatus','Quote error: '+prettyError(e),'bad');}
+}
+async function connect(){
+ try{await ensurePolygon();provider=new ethers.BrowserProvider(window.ethereum);await provider.send('eth_requestAccounts',[]);signer=await provider.getSigner();account=await signer.getAddress();exWrite=new ethers.Contract(EXCHANGE,EX_ABI,signer);tokenWrite=new ethers.Contract(TOKEN,TOKEN_ABI,signer);$('connectBtn').textContent=account.slice(0,6)+'…'+account.slice(-4);$('buyBtn').textContent='Buy NAVAA';$('sellBtn').textContent='Sell NAVAA';await refreshInfo();status('tradeStatus','Wallet connected: '+account,'good');}
+ catch(e){status('tradeStatus','Wallet connection failed: '+prettyError(e),'bad');}
+}
+async function tradeBuy(){
+ try{if(!exWrite)throw Error('Pehle wallet connect karein.');await ensurePolygon();const gross=amountToUnits($('buyAmount').value);const q=await exRead.quoteBuy(gross);if(!q[3])throw Error('Current quote executable nahi hai: reserve check karein ya exchange paused hai.');const minimum=minOut(q[2],'slippage');status('tradeStatus','Wallet mein buy transaction review karein…');const tx=await exWrite.buy(minimum,deadline(),{value:gross});status('tradeStatus','Buy pending: '+tx.hash);await tx.wait();status('tradeStatus','Buy successful! Transaction: '+tx.hash,'good');await refreshInfo();}
+ catch(e){status('tradeStatus','Buy nahi hua: '+prettyError(e),'bad');}
+}
+async function approveSell(){
+ try{if(!tokenWrite)throw Error('Pehle wallet connect karein.');await ensurePolygon();const amount=amountToUnits($('sellAmount').value);status('tradeStatus','Wallet mein approval transaction review karein…');const tx=await tokenWrite.approve(EXCHANGE,amount);status('tradeStatus','Approval pending: '+tx.hash);await tx.wait();status('tradeStatus','NAVAA approval successful. Ab Sell NAVAA dabayein.','good');await updateQuotes();}
+ catch(e){status('tradeStatus','Approval failed: '+prettyError(e),'bad');}
+}
+async function tradeSell(){
+ try{if(!exWrite||!tokenRead)throw Error('Pehle wallet connect karein.');await ensurePolygon();const amount=amountToUnits($('sellAmount').value);const allowance=await tokenRead.allowance(account,EXCHANGE);if(allowance<amount)throw Error('Pehle Approve NAVAA dabakar approval confirm karein.');const q=await exRead.quoteSell(amount);if(!q[3])throw Error('Sell abhi executable nahi: Exchange POL reserve, pause status aur sell rate check karein.');const minimum=minOut(q[2],'slippage2');status('tradeStatus','Wallet mein sell transaction review karein…');const tx=await exWrite.sell(amount,minimum,deadline());status('tradeStatus','Sell pending: '+tx.hash);await tx.wait();status('tradeStatus','Sell successful! Transaction: '+tx.hash,'good');await refreshInfo();}
+ catch(e){status('tradeStatus','Sell nahi hua: '+prettyError(e),'bad');}
+}
+async function adminTx(label,fn){try{if(!exWrite)throw Error('Owner wallet connect karein.');if(!isOwner)throw Error('Connected wallet owner nahi hai.');status('adminStatus',label+' transaction wallet mein review karein…');const tx=await fn();status('adminStatus','Pending: '+tx.hash);await tx.wait();status('adminStatus',label+' successful.','good');await refreshInfo();}catch(e){status('adminStatus',label+' failed: '+prettyError(e),'bad');}}
+$('connectBtn').onclick=connect;$('buyBtn').onclick=tradeBuy;$('sellBtn').onclick=tradeSell;$('approveBtn').onclick=approveSell;
+$('buyTab').onclick=()=>{$('buyPanel').classList.remove('hidden');$('sellPanel').classList.add('hidden');$('buyTab').classList.add('active');$('sellTab').classList.remove('active');};
+$('sellTab').onclick=()=>{$('sellPanel').classList.remove('hidden');$('buyPanel').classList.add('hidden');$('sellTab').classList.add('active');$('buyTab').classList.remove('active');updateQuotes();};
+['buyAmount','sellAmount','slippage','slippage2'].forEach(id=>$(id).addEventListener('input',()=>{clearTimeout(window.quoteTimer);window.quoteTimer=setTimeout(updateQuotes,250);}));
+$('setRatesBtn').onclick=()=>adminTx('Update rates',()=>exWrite.setRates(ethers.parseEther($('newBuyRate').value),ethers.parseEther($('newSellRate').value)));
+$('setFeeBtn').onclick=()=>adminTx('Update fee wallet',()=>exWrite.setFeeWallet($('newFeeWallet').value.trim()));
+$('depositPolBtn').onclick=()=>adminTx('Deposit POL',()=>exWrite.depositPOL({value:amountToUnits($('depositAmount').value)}));
+$('withdrawPolBtn').onclick=()=>adminTx('Withdraw POL',()=>exWrite.withdrawPOL(amountToUnits($('withdrawPolAmount').value)));
+$('withdrawTokenBtn').onclick=()=>adminTx('Withdraw NAVAA',()=>exWrite.withdrawNAVAA(amountToUnits($('withdrawTokenAmount').value)));
+$('pauseBtn').onclick=()=>adminTx('Pause trading',()=>exWrite.pause());$('unpauseBtn').onclick=()=>adminTx('Unpause trading',()=>exWrite.unpause());
+if(window.ethereum){window.ethereum.on?.('accountsChanged',()=>location.reload());window.ethereum.on?.('chainChanged',()=>location.reload());}
+initRead().then(updatePolPrice).catch(e=>status('tradeStatus','Could not load contract data: '+prettyError(e),'bad'));
+setInterval(refreshInfo,30000);setInterval(updatePolPrice,180000);
+})();
+</script>
+</body></html>
